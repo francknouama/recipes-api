@@ -21,6 +21,7 @@ import (
 	"github.com/francknouama/recipes-api/docs"
 	"github.com/francknouama/recipes-api/handlers"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -51,8 +52,15 @@ func init() {
 	// for _, recipe := range recipes {
 	// listOfRecipes = append(listOfRecipes, recipe)
 	// }
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
+	status := redisClient.Ping(ctx)
+	log.Println(status)
 	collection = client.Database(os.Getenv("MONGO_DATABASE")).Collection("recipes")
-	recipesHandler = handlers.NewRecipesHandler(ctx, collection)
+	recipesHandler = handlers.NewRecipesHandler(ctx, collection, redisClient)
 	// insertManyResult, err := collection.InsertMany(ctx, listOfRecipes)
 	// if err != nil {
 	// log.Fatal(err)
