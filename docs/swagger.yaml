@@ -9,8 +9,6 @@ definitions:
     type: object
   main.Recipe:
     properties:
-      id:
-        type: string
       ingredients:
         items:
           type: string
@@ -21,7 +19,7 @@ definitions:
         type: array
       name:
         type: string
-      published_at:
+      publishedAt:
         type: string
       tags:
         items:
@@ -45,11 +43,15 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Find all the recipes
           schema:
             items:
               $ref: '#/definitions/main.Recipe'
             type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
       summary: Return all recipes in the repository.
       tags:
       - recipes
@@ -127,21 +129,6 @@ paths:
           schema:
             $ref: '#/definitions/main.ErrorResponse'
       summary: Update an existing recipe
-      tags:
-      - recipes
-  /recipes/search:
-    get:
-      description: GET /recipes/search recipes searchRecipes.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Operation successfully ran
-          schema:
-            items:
-              $ref: '#/definitions/main.Recipe'
-            type: array
-      summary: Return recipes matching our search criteria
       tags:
       - recipes
 produces:
