@@ -37,12 +37,18 @@ const docTemplate = `{
                 "summary": "Return all recipes in the repository.",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Find all the recipes",
                         "schema": {
                             "type": "array",
                             "items": {
                                 "$ref": "#/definitions/main.Recipe"
                             }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
                 }
@@ -81,29 +87,6 @@ const docTemplate = `{
                         "description": "Invalid input",
                         "schema": {
                             "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/recipes/search": {
-            "get": {
-                "description": "GET /recipes/search recipes searchRecipes.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "recipes"
-                ],
-                "summary": "Return recipes matching our search criteria",
-                "responses": {
-                    "200": {
-                        "description": "Operation successfully ran",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/main.Recipe"
-                            }
                         }
                     }
                 }
@@ -199,9 +182,6 @@ const docTemplate = `{
         "main.Recipe": {
             "type": "object",
             "properties": {
-                "id": {
-                    "type": "string"
-                },
                 "ingredients": {
                     "type": "array",
                     "items": {
@@ -217,7 +197,7 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "published_at": {
+                "publishedAt": {
                     "type": "string"
                 },
                 "tags": {
