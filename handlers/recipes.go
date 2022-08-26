@@ -8,11 +8,11 @@ import (
 
 	"github.com/francknouama/recipes-api/models"
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
+	"github.com/go-redis/redis"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/net/context"
-	"gopkg.in/mgo.v2/bson"
 )
 
 type ErrorResponse struct {
@@ -64,7 +64,7 @@ func (handler *RecipesHandler) NewRecipeHandler(c *gin.Context) {
 	}
 
 	log.Println("Remove data from Redis")
-	handler.redisClient.Del(handler.ctx, "recipes")
+	handler.redisClient.Del("recipes")
 
 	c.JSON(http.StatusOK, recipe)
 }
@@ -78,7 +78,7 @@ func (handler *RecipesHandler) NewRecipeHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /recipes [get]
 func (handler *RecipesHandler) ListRecipesHandler(c *gin.Context) {
-	val, err := handler.redisClient.Get(handler.ctx, "recipes").Result()
+	val, err := handler.redisClient.Get("recipes").Result()
 	if err == redis.Nil {
 		log.Printf("Request to MongoDB")
 		cur, err := handler.collection.Find(handler.ctx, bson.M{})
@@ -98,7 +98,7 @@ func (handler *RecipesHandler) ListRecipesHandler(c *gin.Context) {
 		}
 
 		data, _ := json.Marshal(recipes)
-		handler.redisClient.Set(handler.ctx, "recipes", string(data), 0)
+		handler.redisClient.Set("recipes", string(data), 0)
 		c.JSON(http.StatusOK, recipes)
 	} else if err != nil {
 		c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -138,11 +138,11 @@ func (handler *RecipesHandler) UpdateRecipeHandler(c *gin.Context) {
 	objectID, _ := primitive.ObjectIDFromHex(id)
 	_, err := handler.collection.UpdateOne(handler.ctx, bson.M{
 		"_id": objectID,
-	}, bson.D{{Name: "$set", Value: bson.D{
-		{Name: "name", Value: recipe.Name},
-		{Name: "instructions", Value: recipe.Instructions},
-		{Name: "ingredients", Value: recipe.Ingredients},
-		{Name: "tags", Value: recipe.Tags},
+	}, bson.D{{Key: "$set", Value: bson.D{
+		{Key: "name", Value: recipe.Name},
+		{Key: "instructions", Value: recipe.Instructions},
+		{Key: "ingredients", Value: recipe.Ingredients},
+		{Key: "tags", Value: recipe.Tags},
 	}}})
 	if err != nil {
 		log.Println(err)
@@ -153,7 +153,7 @@ func (handler *RecipesHandler) UpdateRecipeHandler(c *gin.Context) {
 	}
 
 	log.Println("Remove data from Redis")
-	handler.redisClient.Del(handler.ctx, "recipes")
+	handler.redisClient.Del("recipes")
 
 	c.JSON(http.StatusOK, gin.H{"message": "Recipe has been updated"})
 }
@@ -183,6 +183,35 @@ func (handler *RecipesHandler) DeleteRecipeHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Recipe has been deleted",
 	})
+}
+
+// GetOneRecipeHandler godoc
+// @Summary Find a specific recipe
+// @Description GET /recipes/{id} recipes getOneRecipe
+// @Tags recipes
+// @Produce json
+// @Param id path string true "Recipe ID"
+// @Success 200 {object} models.Recipe "Successful operation"
+// @Failure 404 {object} ErrorResponse "Invalid recipe ID"
+// @Router /recipes/{id} [get]
+func (handler *RecipesHandler) GetOneRecipeHandler(c *gin.Context) {
+	id := c.Param("id")
+	objectId, _ := primitive.ObjectIDFromHex(id)
+
+	var recipe models.Recipe
+	err := handler.collection.FindOne(handler.ctx, bson.M{
+		"_id": objectId,
+	}).Decode(&recipe)
+
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Error: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, recipe)
 }
 
 // SearchRecipesHandler godoc
