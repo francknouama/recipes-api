@@ -1,0 +1,18 @@
+basePath: /
+consumes:
+- application/json
+host: localhost:8080
+info:
+  contact:
+    email: franck.nouama@gmail.com
+    name: Franck Nouama
+  description: This is a sample recipes API. You can find out more about the API at
+    https://github.com/francknouama/recipes-api
+  title: Recipes API
+  version: 1.0.0
+paths: {}
+produces:
+- application/json
+schemes:
+- http
+swagger: "2.0"
