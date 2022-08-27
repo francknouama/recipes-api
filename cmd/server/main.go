@@ -3,8 +3,9 @@
 // @description This is a sample recipes API. You can find out more about the API at https://github.com/francknouama/recipes-api
 //
 // @schemes http
-// @host localhost:8080
+// @host api.recipes.io:8080
 // @BasePath /
+// @securityDefinitions.apikey header Authorization "Api Key"
 // @version 1.0.0
 // @contact.name Franck Nouama
 // @contact.email franck.nouama@gmail.com
@@ -90,5 +91,5 @@ func main() {
 		authorized.GET("/recipes/:id", recipesHandler.GetOneRecipeHandler)
 	}
 
-	router.Run()
+	router.RunTLS(":443", "certs/localhost.crt", "certs/localhost.key")
 }

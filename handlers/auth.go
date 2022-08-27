@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/auth0-community/go-auth0"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/francknouama/recipes-api/models"
 	"github.com/gin-contrib/sessions"
@@ -14,6 +15,7 @@ import (
 	"github.com/rs/xid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"gopkg.in/square/go-jose.v2"
 )
 
 type AuthHandler struct {
@@ -38,6 +40,17 @@ type JWTOutput struct {
 	Expires time.Time `json:"expires"`
 }
 
+// SignInHandler godoc
+// @Summary LOgin new user
+// @Description POST /signin User signIn
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param recipe body models.User true "Recipe payload"
+// @Success 200 {object} "" "Successful operation"
+// @Failure 400 {object} ErrorResponse "Invalid input"
+// @Failure 401 {object} ErrorResponse "Invalid credentials"
+// @Router /signin [post]
 func (handler *AuthHandler) SignInHandler(c *gin.Context) {
 
 	var user models.User
@@ -127,13 +140,17 @@ func (handler *AuthHandler) SignOutHandler(c *gin.Context) {
 
 func (handler *AuthHandler) AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		session := sessions.Default(c)
-		sessionToken := session.Get("token")
-		if sessionToken == nil {
-			c.JSON(http.StatusForbidden, gin.H{
-				"message": "Not logged",
-			})
+		var auth0Domain = "https://" + os.Getenv("AUTH0_DOMAIN") + "/"
+		client := auth0.NewJWKClient(auth0.JWKClientOptions{URI: auth0Domain + ".well-known/jwks.json"}, nil)
+		configuration := auth0.NewConfiguration(client, []string{os.Getenv("AUTH0_API_IDENTIFIER")}, auth0Domain, jose.RS256)
+		validator := auth0.NewValidator(configuration, nil)
+
+		_, err := validator.ValidateRequest(c.Request)
+
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, ErrorResponse{Error: "Invalid token"})
 			c.Abort()
+			return
 		}
 		c.Next()
 	}
