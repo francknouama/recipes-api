@@ -42,6 +42,7 @@ func NewRecipesHandler(ctx context.Context, collection *mongo.Collection, redisC
 // @Param recipe body models.Recipe true "Recipe payload"
 // @Success 200 {object} models.Recipe "Successful operation"
 // @Failure 400 {object} ErrorResponse "Invalid input"
+// @Failure 401 {object} ErrorResponse "Invalid credentials"
 // @Router /recipes [post]
 func (handler *RecipesHandler) NewRecipeHandler(c *gin.Context) {
 	var recipe models.Recipe
